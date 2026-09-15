@@ -261,12 +261,8 @@ func (r *MacosDeviceCompliancePolicyResource) Schema(ctx context.Context, req re
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"rule_name": schema.StringAttribute{
-							Optional:            true,
-							Computed:            true,
-							MarkdownDescription: "Name of the scheduled action rule",
-							PlanModifiers: []planmodifier.String{
-								planmodifiers.DefaultValueString("unavailable"),
-							},
+    						Optional:            true,
+    						MarkdownDescription: "Name of the scheduled action rule",
 						},
 						"scheduled_action_configurations": schema.SetNestedAttribute{
 							Required:            true,
