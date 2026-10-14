@@ -132,6 +132,13 @@ func (m *GroupPolicyDefinitionMock) RegisterMocks() {
 			urlParts := strings.Split(req.URL.Path, "/")
 			defID := urlParts[len(urlParts)-2]
 
+			if defID == "def-presentations-error" {
+				return httpmock.NewStringResponse(
+					500,
+					`{"error":{"code":"InternalServerError","message":"Presentations lookup failed"}}`,
+				), nil
+			}
+
 			scenario := determinePresentationsScenario(defID)
 			if scenario == "" {
 				return httpmock.NewStringResponse(500, `{"error":{"code":"InternalServerError","message":"Could not determine presentations scenario"}}`), nil
@@ -501,6 +508,9 @@ func (m *GroupPolicyDefinitionMock) RegisterMocks() {
 			if def, hasDef := defValueData["definition"]; hasDef {
 				response["definition"] = def
 			}
+			if enabled, hasEnabled := defValueData["enabled"]; hasEnabled {
+				response["enabled"] = enabled
+			}
 
 			return httpmock.NewJsonResponse(200, response)
 		})
@@ -609,6 +619,12 @@ func determineCatalogScenario(filter string) string {
 	if strings.Contains(filter, "Test Policy With Read-Only Text") {
 		return "readonly"
 	}
+	if strings.Contains(filter, "Test Policy Without Presentations") {
+		return "no_presentations"
+	}
+	if strings.Contains(filter, "Test Policy Presentations Error") {
+		return "presentations_error"
+	}
 	return ""
 }
 
@@ -628,6 +644,8 @@ func determinePresentationsScenario(defID string) string {
 		return "dropdown"
 	case "def-readonly":
 		return "readonly"
+	case "def-no-presentations":
+		return "no_presentations"
 	default:
 		return ""
 	}

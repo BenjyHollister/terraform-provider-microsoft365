@@ -1,6 +1,7 @@
 package graphBetaGroupPolicyDefinition_test
 
 import (
+	"fmt"
 	"regexp"
 	"testing"
 
@@ -10,6 +11,7 @@ import (
 	graphBetaGroupPolicyDefinition "github.com/deploymenttheory/terraform-provider-microsoft365/internal/services/resources/device_management/graph_beta/group_policy_definition"
 	groupPolicyDefinitionMocks "github.com/deploymenttheory/terraform-provider-microsoft365/internal/services/resources/device_management/graph_beta/group_policy_definition/mocks"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/jarcoal/httpmock"
 )
 
@@ -405,4 +407,107 @@ func TestUnitResourceGroupPolicyDefinition_13_Validation_InvalidClassType(t *tes
 			},
 		},
 	})
+}
+
+// Test 014: Policy without presentations (enabled/disabled only)
+func TestUnitResourceGroupPolicyDefinition_14_NoPresentations(t *testing.T) {
+	mocks.SetupUnitTestEnvironment(t)
+	_, groupPolicyDefinitionMock := setupMockEnvironment()
+	defer httpmock.DeactivateAndReset()
+	defer groupPolicyDefinitionMock.CleanupMockState()
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: mocks.TestUnitTestProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: loadUnitTestTerraform("014_no_presentations.tf"),
+				Check: resource.ComposeTestCheckFunc(
+					check.That(graphBetaGroupPolicyDefinition.ResourceName+".test_014").Key("id").Exists(),
+					check.That(graphBetaGroupPolicyDefinition.ResourceName+".test_014").Key("group_policy_configuration_id").HasValue("config-014"),
+					check.That(graphBetaGroupPolicyDefinition.ResourceName+".test_014").Key("policy_name").HasValue("Test Policy Without Presentations"),
+					check.That(graphBetaGroupPolicyDefinition.ResourceName+".test_014").Key("enabled").HasValue("true"),
+					check.That(graphBetaGroupPolicyDefinition.ResourceName+".test_014").Key("values.#").HasValue("0"),
+				),
+			},
+			{
+				ResourceName:      graphBetaGroupPolicyDefinition.ResourceName + ".test_014",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			{
+				Config: loadUnitTestTerraform("014_no_presentations_disabled.tf"),
+				Check: resource.ComposeTestCheckFunc(
+					check.That(graphBetaGroupPolicyDefinition.ResourceName+".test_014").Key("enabled").HasValue("false"),
+					check.That(graphBetaGroupPolicyDefinition.ResourceName+".test_014").Key("values.#").HasValue("0"),
+				),
+			},
+		},
+	})
+}
+
+// Test 015: Presentations lookup fails - the error is returned instead of being treated as no presentations
+func TestUnitResourceGroupPolicyDefinition_15_PresentationsLookupError(t *testing.T) {
+	mocks.SetupUnitTestEnvironment(t)
+	_, groupPolicyDefinitionMock := setupMockEnvironment()
+	defer httpmock.DeactivateAndReset()
+	defer groupPolicyDefinitionMock.CleanupMockState()
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: mocks.TestUnitTestProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      loadUnitTestTerraform("015_presentations_error.tf"),
+				ExpectError: regexp.MustCompile(`failed to find presentation template`),
+			},
+		},
+	})
+}
+
+// Test 016: Import with a composite ID selects the given definition value when a configuration
+// holds more than one definition value
+func TestUnitResourceGroupPolicyDefinition_16_ImportMultipleDefinitionsInConfiguration(t *testing.T) {
+	mocks.SetupUnitTestEnvironment(t)
+	_, groupPolicyDefinitionMock := setupMockEnvironment()
+	defer httpmock.DeactivateAndReset()
+	defer groupPolicyDefinitionMock.CleanupMockState()
+
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: mocks.TestUnitTestProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: loadUnitTestTerraform("016_multiple_definitions_in_configuration.tf"),
+				Check: resource.ComposeTestCheckFunc(
+					check.That(graphBetaGroupPolicyDefinition.ResourceName+".test_016_textbox").Key("policy_name").HasValue("Test Policy TextBox"),
+					check.That(graphBetaGroupPolicyDefinition.ResourceName+".test_016_decimal").Key("policy_name").HasValue("Test Policy Decimal"),
+				),
+			},
+			{
+				ResourceName:      graphBetaGroupPolicyDefinition.ResourceName + ".test_016_textbox",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateCheck:  checkImportedPolicyName("Test Policy TextBox"),
+			},
+			{
+				ResourceName:      graphBetaGroupPolicyDefinition.ResourceName + ".test_016_decimal",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateCheck:  checkImportedPolicyName("Test Policy Decimal"),
+			},
+		},
+	})
+}
+
+// checkImportedPolicyName verifies that an import resolved the expected policy. ImportStateVerify
+// alone cannot detect a wrong definition value, because it matches the imported state to any
+// existing resource with the same ID.
+func checkImportedPolicyName(expected string) resource.ImportStateCheckFunc {
+	return func(states []*terraform.InstanceState) error {
+		if len(states) != 1 {
+			return fmt.Errorf("expected one imported resource, got %d", len(states))
+		}
+		if actual := states[0].Attributes["policy_name"]; actual != expected {
+			return fmt.Errorf("expected imported policy_name %q, got %q", expected, actual)
+		}
+		return nil
+	}
 }

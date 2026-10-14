@@ -176,15 +176,49 @@ func (r *CloudPcProvisioningPolicyResource) Schema(ctx context.Context, req reso
 							Optional: true,
 							Computed: true,
 							MarkdownDescription: "The supported Azure region where the IT admin wants the provisioning policy to create Cloud PCs. It is recommended using the Automatic option." +
-								"The option allows Windows 365 to make the best selection which decreases the chance of provisioning failure.Must be one of: automatic, japaneast, eastasia.",
+								"The option allows Windows 365 to make the best selection which decreases the chance of provisioning failure.",
 							Default: stringdefault.StaticString("automatic"),
 							Validators: []validator.String{
-								stringvalidator.OneOf("automatic", "japaneast", "eastasia", "southeastasia", "koreacentral"),
+								stringvalidator.OneOf(
+									"automatic",
+									"southafricanorth",
+									"eastasia",
+									"japaneast",
+									"japanwest",
+									"koreacentral",
+									"southeastasia",
+									"australiaeast",
+									"newzealandnorth",
+									"canadacentral",
+									"mexicocentral",
+									"francecentral",
+									"germanywestcentral",
+									"northeurope",
+									"italynorth",
+									"westeurope",
+									"norwayeast",
+									"polandcentral",
+									"spaincentral",
+									"swedencentral",
+									"switzerlandnorth",
+									"uksouth",
+									"indiacentral",
+									"qatarcentral",
+									"israelcentral",
+									"uaenorth",
+									"brazilsouth",
+									"centralus",
+									"southcentralus",
+									"eastus",
+									"eastus2",
+									"westus2",
+									"westus3",
+								),
 							},
 						},
 						"region_group": schema.StringAttribute{
 							Required:            true,
-							MarkdownDescription: "The Cloud PC region group. Must be one of: default, australia, canada, usCentral, usEast, usWest, france, germany, europeUnion, unitedKingdom, japan, asia, india, southAmerica, euap, usGovernment, usGovernmentDOD, unknownFutureValue, norway, switzerland, southKorea, middleEast, mexico, australasia, europe.",
+							MarkdownDescription: "The Cloud PC region group. Must be one of: default, australia, canada, usCentral, usEast, usWest, france, germany, europeUnion, unitedKingdom, japan, asia, india, southAmerica, euap, usGovernment, usGovernmentDOD, unknownFutureValue, norway, switzerland, southKorea, middleEast, mexico, australasia, europe, ireland.",
 							Validators: []validator.String{
 								stringvalidator.OneOf(
 									"default",
@@ -212,6 +246,7 @@ func (r *CloudPcProvisioningPolicyResource) Schema(ctx context.Context, req reso
 									"mexico",
 									"australasia",
 									"europe",
+									"ireland",
 								),
 							},
 						},
@@ -235,14 +270,19 @@ func (r *CloudPcProvisioningPolicyResource) Schema(ctx context.Context, req reso
 			"image_id": schema.StringAttribute{
 				Required: true,
 				MarkdownDescription: "The unique identifier that represents an operating system image used for provisioning new Cloud PCs. Must be one of:" +
+					"'microsoftwindowsdesktop_windows-ent-cpc_win11-26h2-ent-cpc'," +
+					"'microsoftwindowsdesktop_windows-ent-cpc_win11-26h2-ent-cpc-m365'," +
 					"'microsoftwindowsdesktop_windows-ent-cpc_win11-25h2-ent-cpc'," +
 					"'microsoftwindowsdesktop_windows-ent-cpc_win11-25h2-ent-cpc-m365'," +
 					"'microsoftwindowsdesktop_windows-ent-cpc_win11-24H2-ent-cpc'," +
 					"'microsoftwindowsdesktop_windows-ent-cpc_win11-24H2-ent-cpc-m365'," +
 					"'microsoftwindowsdesktop_windows-ent-cpc_win11-23h2-ent-cpc-m365'," +
-					"'microsoftwindowsdesktop_windows-ent-cpc_win11-23h2-ent-cpc'.",
+					"'microsoftwindowsdesktop_windows-ent-cpc_win11-23h2-ent-cpc'. " +
+					"Use the `microsoft365_graph_beta_windows_365_cloud_pc_gallery_image` data source to check image availability and support status in your tenant.",
 				Validators: []validator.String{
 					stringvalidator.OneOf(
+						"microsoftwindowsdesktop_windows-ent-cpc_win11-26h2-ent-cpc",
+						"microsoftwindowsdesktop_windows-ent-cpc_win11-26h2-ent-cpc-m365",
 						"microsoftwindowsdesktop_windows-ent-cpc_win11-25h2-ent-cpc",
 						"microsoftwindowsdesktop_windows-ent-cpc_win11-25h2-ent-cpc-m365",
 						"microsoftwindowsdesktop_windows-ent-cpc_win11-24H2-ent-cpc",
