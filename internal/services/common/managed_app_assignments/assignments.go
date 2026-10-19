@@ -28,7 +28,13 @@ const (
 	TypeGroup            = "groupAssignmentTarget"
 	TypeExclusionGroup   = "exclusionGroupAssignmentTarget"
 
-	assignURLTemplate = "{+baseurl}/deviceAppManagement/managedAppPolicies/{managedAppPolicyId}/assign"
+	// Collection names for the policy-type specific assign endpoint. The generic
+	// managedAppPolicies/{id}/assign route is documented but returns
+	// "Resource not found for the segment 'assign'" on the beta API.
+	CollectionAndroid = "androidManagedAppProtections"
+	CollectionIos     = "iosManagedAppProtections"
+
+	assignURLTemplate = "{+baseurl}/deviceAppManagement/{collection}/{managedAppPolicyId}/assign"
 )
 
 // AssignmentModel is one element of the `assignments` set.
@@ -170,12 +176,12 @@ func MapToTerraform(assignments []graphmodels.TargetedManagedAppPolicyAssignment
 	return set, nil
 }
 
-// Assign replaces the full assignment list on a managed app policy.
+// Assign replaces the full assignment list on an app protection policy.
 //
-//	POST /deviceAppManagement/managedAppPolicies/{id}/assign
+//	POST /deviceAppManagement/{androidManagedAppProtections|iosManagedAppProtections}/{id}/assign
 //
 // An empty slice removes all assignments.
-func Assign(ctx context.Context, client *msgraphbetasdk.GraphServiceClient, policyID string, assignments []graphmodels.TargetedManagedAppPolicyAssignmentable) error {
+func Assign(ctx context.Context, client *msgraphbetasdk.GraphServiceClient, collection string, policyID string, assignments []graphmodels.TargetedManagedAppPolicyAssignmentable) error {
 	adapter := client.GetAdapter()
 
 	body := deviceappmanagement.NewTargetedManagedAppConfigurationsItemAssignPostRequestBody()
@@ -186,6 +192,7 @@ func Assign(ctx context.Context, client *msgraphbetasdk.GraphServiceClient, poli
 		assignURLTemplate,
 		map[string]string{
 			"baseurl":            adapter.GetBaseUrl(),
+			"collection":         collection,
 			"managedAppPolicyId": policyID,
 		},
 	)

@@ -58,13 +58,18 @@ func (r *IosManagedAppProtectionResource) Create(ctx context.Context, req resour
 
 	object.ID = types.StringValue(*baseResource.GetId())
 
+	// Persist state first so a failed assign leaves a tainted resource, not an orphan.
+	resp.Diagnostics.Append(resp.State.Set(ctx, &object)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	assignments, err := managedappassignments.Construct(ctx, object.Assignments)
 	if err != nil {
 		resp.Diagnostics.AddError("Error constructing assignments", err.Error())
 		return
 	}
 	if len(assignments) > 0 {
-		if err := managedappassignments.Assign(ctx, r.client, object.ID.ValueString(), assignments); err != nil {
+		if err := managedappassignments.Assign(ctx, r.client, managedappassignments.CollectionIos, object.ID.ValueString(), assignments); err != nil {
 			errors.HandleKiotaGraphError(ctx, err, resp, constants.TfOperationCreate, r.WritePermissions)
 			return
 		}
@@ -225,7 +230,7 @@ func (r *IosManagedAppProtectionResource) Update(ctx context.Context, req resour
 			resp.Diagnostics.AddError("Error constructing assignments", err.Error())
 			return
 		}
-		if err := managedappassignments.Assign(ctx, r.client, state.ID.ValueString(), assignments); err != nil {
+		if err := managedappassignments.Assign(ctx, r.client, managedappassignments.CollectionIos, state.ID.ValueString(), assignments); err != nil {
 			errors.HandleKiotaGraphError(ctx, err, resp, constants.TfOperationUpdate, r.WritePermissions)
 			return
 		}
