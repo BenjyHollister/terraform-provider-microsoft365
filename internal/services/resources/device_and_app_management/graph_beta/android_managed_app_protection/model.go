@@ -57,5 +57,6 @@ type AndroidManagedAppProtectionResourceModel struct {
 	CustomBrowserPackageId                          types.String `tfsdk:"custom_browser_package_id"`
 	CustomBrowserDisplayName                        types.String `tfsdk:"custom_browser_display_name"`
 
-	Timeouts timeouts.Value `tfsdk:"timeouts"`
+	Assignments types.Set    `tfsdk:"assignments"`
+	Timeouts    timeouts.Value `tfsdk:"timeouts"`
 }

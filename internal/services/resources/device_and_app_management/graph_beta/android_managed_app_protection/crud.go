@@ -7,6 +7,7 @@ import (
 
 	"github.com/deploymenttheory/terraform-provider-microsoft365/internal/constants"
 	"github.com/deploymenttheory/terraform-provider-microsoft365/internal/services/common/crud"
+	managedappassignments "github.com/deploymenttheory/terraform-provider-microsoft365/internal/services/common/managed_app_assignments"
 	errors "github.com/deploymenttheory/terraform-provider-microsoft365/internal/services/common/errors/kiota"
 	sharedmodels "github.com/deploymenttheory/terraform-provider-microsoft365/internal/services/common/shared_models/graph_beta"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -56,6 +57,18 @@ func (r *AndroidManagedAppProtectionResource) Create(ctx context.Context, req re
 	}
 
 	object.ID = types.StringValue(*baseResource.GetId())
+
+	assignments, err := managedappassignments.Construct(ctx, object.Assignments)
+	if err != nil {
+		resp.Diagnostics.AddError("Error constructing assignments", err.Error())
+		return
+	}
+	if len(assignments) > 0 {
+		if err := managedappassignments.Assign(ctx, r.client, object.ID.ValueString(), assignments); err != nil {
+			errors.HandleKiotaGraphError(ctx, err, resp, constants.TfOperationCreate, r.WritePermissions)
+			return
+		}
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &object)...)
 	if resp.Diagnostics.HasError() {
@@ -135,6 +148,24 @@ func (r *AndroidManagedAppProtectionResource) Read(ctx context.Context, req reso
 
 	MapRemoteStateToTerraform(ctx, &object, remoteResource)
 
+	remoteAssignments, err := r.client.
+		DeviceAppManagement().
+		AndroidManagedAppProtections().
+		ByAndroidManagedAppProtectionId(object.ID.ValueString()).
+		Assignments().
+		Get(ctx, nil)
+	if err != nil {
+		errors.HandleKiotaGraphError(ctx, err, resp, operation, r.ReadPermissions)
+		return
+	}
+
+	assignmentsSet, err := managedappassignments.MapToTerraform(remoteAssignments.GetValue())
+	if err != nil {
+		resp.Diagnostics.AddError("Error mapping assignments", err.Error())
+		return
+	}
+	object.Assignments = assignmentsSet
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &object)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -185,6 +216,19 @@ func (r *AndroidManagedAppProtectionResource) Update(ctx context.Context, req re
 	if err != nil {
 		errors.HandleKiotaGraphError(ctx, err, resp, constants.TfOperationUpdate, r.WritePermissions)
 		return
+	}
+
+
+	if !plan.Assignments.IsNull() && !plan.Assignments.IsUnknown() && !plan.Assignments.Equal(state.Assignments) {
+		assignments, err := managedappassignments.Construct(ctx, plan.Assignments)
+		if err != nil {
+			resp.Diagnostics.AddError("Error constructing assignments", err.Error())
+			return
+		}
+		if err := managedappassignments.Assign(ctx, r.client, state.ID.ValueString(), assignments); err != nil {
+			errors.HandleKiotaGraphError(ctx, err, resp, constants.TfOperationUpdate, r.WritePermissions)
+			return
+		}
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)

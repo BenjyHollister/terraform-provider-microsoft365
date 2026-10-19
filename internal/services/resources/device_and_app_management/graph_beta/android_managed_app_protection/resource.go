@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/deploymenttheory/terraform-provider-microsoft365/internal/client"
+	managedappassignments "github.com/deploymenttheory/terraform-provider-microsoft365/internal/services/common/managed_app_assignments"
 	planmodifiers "github.com/deploymenttheory/terraform-provider-microsoft365/internal/services/common/plan_modifiers"
 	commonschema "github.com/deploymenttheory/terraform-provider-microsoft365/internal/services/common/schema"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -368,6 +369,8 @@ func (r *AndroidManagedAppProtectionResource) Schema(ctx context.Context, req re
 				},
 				MarkdownDescription: "Friendly name of the preferred custom browser to open weblinks on Android. Requires managed_browser_to_open_links_required to be true.",
 			},
+
+			"assignments": managedappassignments.Schema(),
 
 			"timeouts": commonschema.ResourceTimeouts(ctx),
 		},
