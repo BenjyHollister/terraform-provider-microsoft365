@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/deploymenttheory/terraform-provider-microsoft365/internal/client"
+	managedappassignments "github.com/deploymenttheory/terraform-provider-microsoft365/internal/services/common/managed_app_assignments"
 	planmodifiers "github.com/deploymenttheory/terraform-provider-microsoft365/internal/services/common/plan_modifiers"
 	commonschema "github.com/deploymenttheory/terraform-provider-microsoft365/internal/services/common/schema"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -348,6 +349,8 @@ func (r *IosManagedAppProtectionResource) Schema(ctx context.Context, req resour
 					stringvalidator.OneOf("useDeviceSettings", "afterDeviceRestart", "whenDeviceLockedExceptOpenFiles", "whenDeviceLocked"),
 				},
 			},
+			"assignments": managedappassignments.Schema(),
+
 			"timeouts": commonschema.ResourceTimeouts(ctx),
 		},
 	}

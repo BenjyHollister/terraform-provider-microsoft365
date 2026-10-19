@@ -58,5 +58,6 @@ type IosManagedAppProtectionResourceModel struct {
 	DisableProtectionOfManagedOutboundOpenInData  types.Bool   `tfsdk:"disable_protection_of_managed_outbound_open_in_data"`
 	AppDataEncryptionType                         types.String `tfsdk:"app_data_encryption_type"`
 
-	Timeouts timeouts.Value `tfsdk:"timeouts"`
+	Assignments types.Set    `tfsdk:"assignments"`
+	Timeouts    timeouts.Value `tfsdk:"timeouts"`
 }
