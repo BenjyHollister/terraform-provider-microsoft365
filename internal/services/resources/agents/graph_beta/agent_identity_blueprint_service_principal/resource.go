@@ -51,6 +51,7 @@ func NewAgentIdentityBlueprintServicePrincipalResource() resource.Resource {
 			"Directory.Read.All",
 		},
 		WritePermissions: []string{
+			"AgentIdentity.ReadWrite.All",
 			"Application.ReadWrite.All",
 			"Directory.ReadWrite.All",
 		},
